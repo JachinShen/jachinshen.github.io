@@ -4,10 +4,10 @@ author: JachinShen
 title:  "Mathematical Foundation of Computer Science Note 1"
 subtitle: "Howework1 Hint & Infinite Sets"
 date:   2018-03-01  12:49:50 +0800
-categories: Math
+categories: Study
 tags: 
-    - Math
     - Study
+    - Math
     - ComputerScience
 ---
 # homework
