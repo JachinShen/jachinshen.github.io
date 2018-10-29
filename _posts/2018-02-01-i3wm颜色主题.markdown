@@ -1,0 +1,150 @@
+---
+layout: post
+author: JachinShen
+title:  "i3wm颜色主题"
+subtitle: "哇！你的 windows 主题好好看！"
+date:   2018-02-01  12:33:41 +0800
+categories: Environment
+tags: 
+    - Environment
+    - Linux
+    - i3wm
+    - Node.js
+    - Python
+---
+# 这不是windows！
+
+i3wm 默认的暗蓝色主题看腻了，想着换其他主题看看。自然是先 Google 了，在 [ArchWiki](https://wiki.archlinux.org/index.php/I3) 上找到了工具：[i3-style](https://github.com/acrisci/i3-style) 和 [j4-make-config](https://github.com/okraits/j4-make-config)。
+
+## i3-style
+
+i3-style 是辅助设置主题色彩，可以通过 yaml 文件设置。
+
+优点是安装简单，缺点是只内置了 Solarized 一个主题，其他主题还在收集中。
+
+### 安装
+
+使用`npm`安装，若无，请先安装`npm`，以 Ubuntu 示例：
+
+```shell
+sudo apt-get install npm
+```
+
+之后就可以用`npm`安装了：
+
+```shell
+npm install -g i3-style
+```
+
+### 使用
+
+内置只有 Solarized 主题，所以如果嫌麻烦，暂时只能用这个主题。
+
+```shell
+i3-style solarized -o ~/.config/i3/config --reload
+```
+
+注意 i3config 文件的路径，GitHub 主页上的是`~/.i3/config`，我自己电脑上，i3 默认存放 config 文件的地方在`~/.config/i3/config`，`--reload`表示自动重新读取配置文件，应用主题。
+
+### 协助
+
+如果你善于配色，可以分享自己的配色主题：
+
+```shell
+i3-style --to-theme ~/.i3/config -o my-theme.yaml
+```
+
+## j4-make-config
+
+j4-make-config 是一个 Python 脚本，可以选择主题、生成配置文件。
+
+优点是主题丰富，缺点是安装略麻烦。
+
+### 安装步骤
+
+GitHub 主页上安装放在了最后，容易让人等不及，所以我先介绍安装。
+
+1. 把文件拉下来
+
+  ```shell
+  git clone https://github.com/okraits/j4-make-config.git
+  ```
+
+1. 把里面的`themes`文件夹放到 config 的目录
+
+  比如我的 i3 配置文件在`~/.config/i3/config`，就把`themes`文件夹移到`~/.config/i3/themes`
+
+1. 生成`config.base`文件
+
+  `config.base`文件是 j4-make-config 用来生成配置文件的基础文件，可以先从 config 文件生成：
+
+  ```shell
+  cp config config.base
+  ```
+
+1. 修改`config.base`文件
+
+#### 窗口
+
+- 如果你以前已经设置过颜色主题，在`config.base`文件中应该会有：
+
+  ```config
+  client.focused #859900 #859900 #fdf6e3 #6c71c4
+  client.focused_inactive #073642 #073642 #eee8d5 #6c71c4
+  client.unfocused #073642 #073642 #93a1a1 #586e75
+  client.urgent #d33682 #d33682 #fdf6e3 #dc322f
+  ```
+
+  替换为`# $i3-theme-window`
+
+- 如果你没有设置过，找不到上述配置，直接在`config.base`最后加上`# $i3-theme-window`即可
+
+  这样做的原因是：j4-make-config 会在`config.base`文件里寻找`# $i3-theme-window`，并把它替换为对应主题的颜色。
+
+#### 状态栏
+
+i3bar 的颜色主题设置也类似：
+
+- 如果你以前设置过，在`config.base`文件中会有：
+
+  ```config
+    colors {
+      separator #dc322f
+      background #002b36
+      statusline #268bd2
+      focused_workspace #fdf6e3 #859900 #fdf6e3
+      active_workspace #fdf6e3 #6c71c4 #fdf6e3
+      inactive_workspace #586e75 #93a1a1 #002b36
+      urgent_workspace #d33682 #d33682 #fdf6e3
+    }
+  ```
+
+  替换为`# $i3-theme-bar`
+
+- 如果你没有，直接在`bar`区域最后一行加上`# $i3-theme-bar`即可
+
+  原因同上，j4-make-config 会寻找`# $i3-theme-bar`替换为具体颜色。
+
+### 使用主题
+
+以下命令可以生成配置文件并自动重载、应用主题：
+
+```shell
+j4-make-config -r <theme-name>|none
+```
+
+其中`<theme-name>`要替换成主题名，可以用的主题名详见`themes`文件夹。
+
+至此，就可以愉快地使用 j4-make-config 更换各种主题了！
+
+### PS
+
+需要注意的是，j4-make-config 替换的内容中有一句：
+
+```config
+new_window normal 0
+```
+
+![]({{ site.url }}/assets/2018/02/01/i3wm_before.png)
+会让有些窗口产生顶栏，占据了空间。如果不想要，注释掉即可。
+![]({{ site.url }}/assets/2018/02/01/i3wm_after.png)

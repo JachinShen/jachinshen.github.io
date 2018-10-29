@@ -1,0 +1,113 @@
+---
+layout: post
+author: JachinShen
+title:  "巡线"
+subtitle: "RoboMaster 第一锅"
+date:   2017-09-05 15:35:00 +0800
+categories: RoboMaster
+tags:
+    - RoboMaster
+    - OpenCV
+    - LeastSquare
+---
+
+2017 年的 RoboMaster 空中机器人挑战赛中，地面有黄线作为标记，可以通过巡线前进到下一个地点。于是需要拟合出黄线的方程，并由此得出从图像中心到黄线的向量，从而实现巡线功能。
+
+[完整代码 链接在此](https://github.com/JachinShen/calculate-yellow-line)
+
+# [](#header-1)提取黄色区域
+
+计算机储存用的色彩模型一般是 RGB，但是黄色不是三原色，所以用 RGB 不是很直观。
+
+HSV 色彩模型和人眼感知颜色的方式很相近。H 表示色彩，S 表示纯度，V 表示明度。这样将 H 限制在黄色区域，同时用 SV 剔除不够黄的区域，就可以提取出黄色区域了。
+
+```cpp
+void getYellowRegion(cv::Mat& src, cv::Mat& dst, int H_low=30, int H_high=75, int S_threshold=80, int V_threshold=80)
+{
+  cv::Mat hsv, yellow_h1, yellow_h2, yellow_h, yellow_sv;
+  std::vector<cv::Mat > hsvSplit;
+  cv::cvtColor(src, hsv, CV_BGR2HSV_FULL);
+  cv::split(hsv, hsvSplit);
+
+  cv::threshold(hsvSplit[0], yellow_h1, H_low,
+      255, cv::THRESH_BINARY);
+  cv::threshold(hsvSplit[0], yellow_h2, H_high,
+      255, cv::THRESH_BINARY_INV); //restrict H in yellow range
+  cv::threshold(hsvSplit[1], hsvSplit[1], S_threshold,
+      255, cv::THRESH_BINARY);
+  cv::threshold(hsvSplit[2], hsvSplit[2], V_threshold,
+      255, cv::THRESH_BINARY); //remove not so yellow points
+
+  cv::bitwise_and(yellow_h1, yellow_h2, yellow_h);
+  cv::bitwise_and(hsvSplit[1], hsvSplit[2], yellow_sv);
+  cv::bitwise_and(yellow_h, yellow_sv, dst);	//get overlapped region
+
+  hsvSplit[0] = yellow_h;
+  cv::merge(hsvSplit, hsv);//hsv mapping bgr for tuning parameters
+  cv::imshow("debug", hsv);
+  cv::waitKey(1);
+}
+```
+
+# [](#header-2)拟合直线
+
+有了黄色的点，下一步就是使用经典的最小二乘法拟合直线了。
+
+[最小二乘法的原理 链接在此](http://blog.csdn.net/qll125596718/article/details/8248249)
+
+在这篇文章的基础上，做了几点改进：
+
+- 直线方程为 y=kx+b ，在斜率小时精确度很高，但是斜率大时虽然理论上可以计算，受限于计算机浮点计算的准确度，精确度会下降很多，甚至在拟合折线会拟合出角平分线。
+
+- 当直线刚好垂直于 x 轴时（点很少时有可能出现），斜率为无穷大，变量 a 就为 Nan，要预防这种错误。
+
+为了解决这些问题，我引入了 x=ky+b 的直线方程，选择斜率小的方程使用，这样既解决了问题，也可以利用原来的代码，同时也没有增加过多的运算量。
+
+```cpp
+  float t1 = 0.0, t2 = 0.0, t3 = 0.0, t4 = 0.0, t5 = 0.0;
+    /* use formulas to calculate a,b,ah,bh */
+    for ( int i = 0; i < (int)x.size(); ++i )
+    {
+        t1 += x[i] * x[i];
+        t2 += x[i];
+        t3 += x[i] * y[i];
+        t4 += y[i];
+        t5 += y[i] * y[i];
+    }
+
+    /* prevent a or ah being Nan*/
+    if( (t1 * x.size() - t2 * t2) < 1e-6 )
+    {
+        is_kxb = false;
+        ah = 0;
+        bh = ( t5 * t2 - t4 * t3 ) / ( t5 * x.size() - t4 * t4 );
+    }
+    else
+    {
+        if( ( t5 * x.size() - t4 * t4 ) < 1e-6)
+        {
+            is_kxb = true;
+            a = 0;
+            b = ( t1 * t4 - t2 * t3 ) / ( t1 * x.size() - t2 * t2 );
+        }
+        else
+        {
+            a = ( t3 * x.size() - t2 * t4 ) / ( t1 * x.size() - t2 * t2 );
+            b = ( t1 * t4 - t2 * t3 ) / ( t1 * x.size() - t2 * t2 );
+
+            ah = ( t3 * x.size() - t2 * t4 ) / ( t5 * x.size() - t4 * t4 );
+            bh = ( t5 * t2 - t4 * t3 ) / ( t5 * x.size() - t4 * t4 );
+
+            /* because commonly a*ah = 1 */
+            /* so choosing the small-abs one can express the line more accurately */
+            is_kxb = abs( a ) < abs( ah );
+        }
+    }
+
+```
+
+# [](#header-1)总结
+
+- 流程：提取黄色点 --> 拟合直线 --> 利用直线方程
+
+- 实际应用中，主要问题在于提取黄色区域的参数 HSV 的选取，需要根据实际的灯光调整，对参数的依赖很重。

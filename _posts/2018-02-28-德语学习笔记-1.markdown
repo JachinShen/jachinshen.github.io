@@ -1,0 +1,84 @@
+---
+layout: post
+author: JachinShen
+title:  "德语学习笔记-1"
+subtitle: "单元音 单辅音"
+date:   2018-02-28  23:00:29 +0800
+categories: German
+tags: 
+    - German
+    - Study
+---
+# 德语学习笔记-1
+
+## 单元音
+
+a, e, i ,o ,u
+
+### 短音 [a], [ε], [i], [ᴐ], [u]
+
+- 元音之后有两个或两个以上不同辅音：
+    H**a**ns **O**ptik B**i**ld H**e**ft T**u**rm
+
+- 元音之后有两个重叠辅音：
+    H**e**rr(Frau) d**u**mm B**e**tt b**i**tten
+
+- 元音之后有复合辅音 (sch / tz / ng / nk / ck / chs / ch)：
+    **E**cke s**e**chs T**i**sch s**i**ngen m**a**chen
+
+- 部分单音节代词/介词，单辅音前的元音：
+    d**a**s **e**s **i**n **a**n w**a**s m**a**n **a**b
+
+### 长音 [a:], [e:], [i:], [o:], [u:]
+
+简单来说就是，其他情况
+
+- 元音自成一个音节：
+    **a**ber **o**ben **e**ben **U**fer
+
+- 元音后没有辅音，或只有一个辅音：
+    V**a**ter Br**u**der T**i**ger d**u** g**u**ten T**a**g
+
+- 元音字母重叠 (oo / aa / ee)：
+    T**ee** B**oo**t B**ee**t p**aa**r
+
+- 字母 h 前面的元音，h 不发音：
+    **Uh**r g**eh**en **ah**nen **ih**nen **oh**ne
+
+### e 发轻音 [Ə]
+
+- 词尾 -e, -el, -en, -eln, -es, -em：
+    Nam**e** Henk**el** lern**en** Taf**eln** Tag**es** gut**em**
+
+- 非重读前缀中 ge-, be-：
+    **ge'**lernt **be'**kommen **ge'**gessen **be'**stellen
+
+## 单辅音
+
+### 浊辅音清化
+
+- b, d, g 在词尾时，转化为 p, t, k：
+    Ta**g** a**b** Flu**g** Lo**b** Ban**d** To**d**
+    ps: 不在词尾时，保持浊辅音 (Ta**g**e lob**e**n)
+
+- 浊辅音在清辅音前：
+    blei**b**t O**b**st sa**g**t freun**d**lieh
+
+### s: z/s
+
+- s 在元音前 [z]：
+    **s**ehen ge**s**ehen **S**ofa **s**uchen be**s**uchen **s**owie**s**o
+
+- 元音后或辅音前 [s]：
+    mei**s**ten Te**s**t i**s**t Ra**s**pel
+
+- 词尾，ss，ß [s]:
+    Bu**s** da**s** wa**s** Fu**$\beta$** flei**$\beta$**ig wei**$\beta$**
+
+### v: f/v
+
+- 德国本地单词 [f]：
+    **V**ater **V**ier
+
+- 外来词 [v]：
+    **V**ase

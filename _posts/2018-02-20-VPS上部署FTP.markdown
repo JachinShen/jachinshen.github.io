@@ -1,0 +1,138 @@
+---
+layout: post
+author: JachinShen
+title:  "VPS上部署FTP"
+subtitle: "中文资料太碎，就自己写了"
+date:   2018-02-20  18:45:39 +0800
+categories: Environment
+tags: 
+    - Environment
+    - Linux
+    - Cloud
+---
+# 如何上传文件
+
+与 VPS 进行小文件传输时，可以使用 scp 来保证安全。然而，在进行大文件传输时，还是 FTP 更加快速靠谱。在 VPS 上安装 FTP 遇到了很多坑，所以在此记录一下。
+
+## VPS 环境
+
+- Debian 4.9.30-2+deb9u5 (2017-09-19) x86_64
+- Linux new 4.9.0-3-amd64
+
+## FTP 服务
+
+### 安装 vsftpd 服务
+
+```shell
+apt-get install vsftpd
+```
+
+### 启动服务
+
+```shell
+systemctl start vsftpd.service #启动
+systemctl enable vsftpd.service #开机自启
+```
+
+### 配置
+
+```shell
+vim /etc/vsftpd.conf
+```
+
+修改：
+
+```shell
+anonymous_enable=NO # 禁止匿名访问
+
+local_enable=YES # 允许本地用户登陆
+
+write_enable=YES # 允许上传文件
+
+local_umask=022 # 777-022=755，设置上传文件的权限
+
+chroot_local_user=YES # 限制只能访问用户自己的根目录
+chroot_list_enable=YES # 开启列表管理根目录
+chroot_list_file=/etc/vsftpd.chroot_list # 不受限制的用户列表
+local_root=/home/ftp # 用户目录
+
+pasv_enable=YES # 使用被动模式
+pasv_min_port=12345 # 设置被动模式传输的最小端口号
+pasv_max_port=54321 # 最大端口号
+pasv_address=11.11.11.11 # VPS 的外网 ip
+listen_port=21 # 发出命令用的端口
+```
+
+如果没有`vsftpd.chroot_list`，新建一个
+
+### 创建目录
+
+```shell
+mkdir /home/ftp
+chmod a-w /home/ftp
+# 必须去掉根目录的可读权限，否则连接时报500错误
+```
+
+### 创建用户
+
+```shell
+useradd -d /home/ftp/ftpuser -M ftpuser
+passwd ftpuser
+```
+
+如果需要上传文件，不仅需要 ftp 允许写入，还需要 ftpuser 用户被允许在该目录写入。具体权限管理可以搜索`chmod`
+
+```shell
+mkdir /home/ftp/ftpuser
+```
+
+### 防火墙
+
+[Debian iptables](https://wiki.debian.org/iptables)
+
+```shell
+vim /etc/iptables.test.rules
+```
+
+放开相关端口限制
+
+```shell
+-A INPUT -p tcp --dport 21 -j ACCEPT
+-A OUTPUT -p tcp --dport 21 -j ACCEPT
+-A INPUT -p tcp --dport 12345:54321 -j ACCEPT
+-A OUTPUT -p tcp --dport 12345:54321 -j ACCEPT
+```
+
+应用防火墙规则
+
+```shell
+iptables-restore < /etc/iptables.test.rules
+```
+
+### 其他注意事项
+
+#### 登陆 530 login incorrect 错误
+
+```shell
+vim /etc/pam.d/vsftpd
+```
+
+注释掉
+
+```shell
+#auth required pam_shells.so
+```
+
+重启服务
+
+```shell
+systemctl restart vsftpd.service
+```
+
+#### 主动模式与被动模式
+
+> FTP是基于TCP的服务，使用2个端口，一个数据端口和一个命令端口（也可叫做控制端口）。通常来说这两个端口是21（命令端口）和20（数据端口）。但FTP工作方式的不同，数据端口并不总是20。这就是主动与被动FTP的最大不同之处。
+
+> 主动模式：数据连接上，服务端从20端口去连接客户端大于1024的端口 命令连接：客户端 （>1024端口） -> 服务器 21端口 数据连接：客户端 （>1024端口） <- 服务器 20端口 优势：主动FTP对FTP服务器的管理有利，但对客户端的管理不利。因为FTP服务器企图与客户端的高位随机端口建立连接，而这个端口很有可能被客户端的防火墙阻塞掉。
+
+> 被动模式：数据连接上，客户端从大于1024端口去连接服务端大于1024的端口 命令连接：客户端 （>1024端口） -> 服务器 21端 数据连接：客户端 （>1024端口） -> 服务器 （>1024端口） 优势：被动FTP对FTP客户端的管理有利，但对服务器端的管理不利。因为客户端要与服务器端建立两个连接，其中一个连到一个高位随机端口，而这个端口很有可能被服务器端的防火墙阻塞掉。

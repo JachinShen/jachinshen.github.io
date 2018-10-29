@@ -1,0 +1,77 @@
+---
+layout: post
+author: JachinShen
+title:  "德语学习笔记 （三）"
+subtitle: "复合元音 更多辅音"
+date:   2018-03-14  16:22:38 +0800
+categories: German
+tags: 
+    - German
+    - Study
+---
+# 与英语出入大的读音
+
+- b, d, g 在单词末尾或者其后紧跟辅音时，发成清辅音 p, t, k
+  - ab, gab, habt, ob, Obst
+  - Abend, Bad, Kind, Wind
+  - mag, Tag, weg, weg
+
+- s 在元音前发浊辅音
+  - See, sehen, sieben, Sonne
+
+- v 在德语单词和外来词词尾发 [f]
+  - Vati, Vieh, von, vor
+
+- W 发 [v]
+  - Wagen, wann, wissen, wie, wohnen
+
+- j 发 [j]
+  - ja, Jacke, jemand, Jugend, Juni
+
+- z 发 [ts]
+  - ganz, Herz, zehn, Zeit
+
+- ts 发 [ts]
+  - bereits, nachts, nichts
+
+- ds 发 [ts]
+  - abends, Deutschlands, Kids, Landsmann
+
+- tz 发 [ts]
+  - Katze, Platz, Satz, sitzen, Witz
+
+- tion 发 [tsion]
+  - Aktion, Intention, Nation, Production
+
+- t 在元音前发 [ts]
+  - Aktie, Patient
+
+- chs, (c)ks 发 [ks]
+  - Fuchs, Sachsen, sechs, Knicks, pieksen, tricksen, zwecks
+
+- ch 在 a, o, u, au 后发 [x]
+  - brauchen, Buch, hoch Loch, nachts
+
+- (-i)g 在词尾读 [ic]
+  - fleissig, richtig
+
+- sch 发 [施]
+  - schreiben, schnell, Tisch
+
+- tsch 发 [吃]
+  - Deutsch, Matsch, lutschen, rutschen
+
+- st 发 [施t]
+  - Staat, Stadt, stets, Stoss, Student, Stuhl, Stunde
+
+- sp 发 [施p]
+  - spannen, Spass, Speise, Spiegel, spinnen, Sport, Sprache, sprechen, sprichst, springen
+
+- qu 发 [kv]
+  - Quelle, quer, Quittung, Quadrat, Quiz, Quatsch
+
+- ng 发 [n]
+  - Anfang, Empfang, Sitzung, Zeitung
+
+- nk 发 [nk]
+  - Bank, Dank, Geschenk

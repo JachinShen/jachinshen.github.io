@@ -1,0 +1,49 @@
+---
+layout: post
+author: JachinShen
+title:  "德语学习笔记（二）"
+subtitle: "复合元音 更多辅音"
+date:   2018-03-06  10:22:38 +0800
+categories: German
+tags: 
+    - German
+    - Study
+---
+# 更多
+
+## 复合元音
+
+| 字母       | 读音      | 例词           | 备注                      |
+| :--------: | :-------: | :------------: | :-----------------------: |
+| ei, ai, ay | [ai]      | Eis, Mai, Haym |                           |
+| au         | [ao]      | auf            |                           |
+| eu, äu     | [ᴐy]      | deuten         |                           |
+| ä          | [ε:], [ε] | Käse, Hände    | $\ge$ 2 辅音发短，äh 发长 |
+| ö          | [ö:], [ö] | Höfe, gönnen   | $\ge$ 2 辅音发短，öh 发长 |
+| ü          | [y:], [y] | Hüte, fünf     | $\ge$ 2 辅音发短，üh 发长 |
+
+## y
+
+| 类型  | 读音  | 例词   | 备注         |
+| :---: | :---: | :----: | :----------: |
+| 元音  | [y:]  | Typ    | $<$ 2 辅音   |
+| 元音  | [y]   | System | $\ge$ 2 辅音 |
+| 辅音  | [j]   | Yoga   | 元音前       |
+
+## 辅音
+
+| 字母             | 读音    | 例词                               | 备注                                       |
+| :--------------: | :-----: | :--------------------------------: | :----------------------------------------: |
+| h                | [h]     | Haus                               |                                            |
+| j                | [j]     | Jacke                              |                                            |
+| l                | [l]     | Geld                               |                                            |
+| r                | [r]     | Fahhrrad                           | 元音前，短元音后颤音                       |
+|                  | [ɐ]     | Vater                              | 长元音后，-er, -ern, -ert, ver-, er-, zer- |
+| z, ts, ds, tz, t | [ts]    | zehn, nachts, Kids, Katze, Patient |                                            |
+| tion             | [tsiᴐn] | Aktion                             |                                            |
+| x, chs, (c)ks    | [ks]    | Taxi, sechs, Knicks                |                                            |
+| ch               | [x]     | Buch                               | a, o, u, au 后                             |
+|                  | [k]     | Chaos                              | 外来语                                     |
+|                  | [ç]     | China                              |                                            |
+| -ig              | [iç]    | richtig                            | 词尾                                       |
+|                  | [igƏ]   | richtige                           | 后面有元音 e                               |

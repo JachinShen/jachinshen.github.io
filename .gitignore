@@ -1,0 +1,13 @@
+_site
+.sass-cache
+.jekyll-metadata
+_drafts
+Gemfile.lock
+_asset_bundler_cache
+.bundle
+.DS_Store
+.jekyll-metadata
+*.gem
+codekit-config.json
+node_modules
+npm-debug.log*

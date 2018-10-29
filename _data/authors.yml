@@ -1,0 +1,7 @@
+JachinShen:
+  name: Jachin Shen
+  picture: /images/JachinShen.jpg
+  links:
+    - title: GitHub
+      url: https://github.com/JachinShen
+      icon: fab fa-github-square

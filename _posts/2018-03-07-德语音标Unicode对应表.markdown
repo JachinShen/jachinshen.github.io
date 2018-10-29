@@ -1,0 +1,102 @@
+---
+layout: post
+author: JachinShen
+title:  "德语音标Unicode对应表"
+subtitle:  "终于打出音标了"
+date:   2018-03-07  11:41:40 +0800
+categories: German
+tags: 
+    - German
+    - Study
+    - Environment
+---
+
+在写德语学习笔记的时候，怎么打音标是一个大问题。
+
+Markdown 内嵌的 Latex 只支持数学公式，引用图片又显得累赘，后来终于想到了好办法！
+
+就是用 Unicode 表示音标！所以在此记录一下德语各音标的 Unicode。
+
+德语音标来自[德语字母与国际音标对应表](http://www.chinasalon.de/Deutsch/YinJieFaYin.htm)
+
+Unicode 查询来自[Unicode](https://www.compart.com/en/unicode)
+
+# 对应表
+
+| 字母           | 音标  | Unicode |
+| :------------: | :---: | :-----: |
+| a, aa, ah      | [a:]  |         |
+| a              | [a]   |         |
+| ä, äh          | [ε:]  | U+03B5  |
+| ä              | [ε]   | U+03B5  |
+| e, ee, eh      | [e:]  |         |
+| e              | [e]   |         |
+|                | [Ə]   | U+018F  |
+| i, ie, ih, ieh | [i:]  |         |
+| i              | [i]   |         |
+| o, oo, oh      | [o:]  |         |
+| o              | [o]   |         |
+| ö, öh, oe      | [ö:]  | U+00F6  |
+| ö              | [ö]   | U+00F6  |
+| u, uh          | [u:]  |         |
+| u              | [u]   |         |
+| ü, üh          | [ü:]  | U+00FC  |
+| ü              | [ü]   | U+00FC  |
+| au             | [au]  |         |
+| ei, ai, ey, ay | [ai]  |         |
+| äu, eu         | [ᴐy]  | U+1D10  |
+| b, bb          | [b]   |         |
+| b              | [p]   |         |
+| c              | [k]   |         |
+|                | [ts]  |         |
+| d, dd          | [d]   |         |
+| d              | [t]   |         |
+| f, ff          | [f]   |         |
+| g, gg          | [g]   |         |
+| g              | [k]   |         |
+|                | [ç]   | U+00E7  |
+|                | [³]   | U+00B3  |
+| h              | [h]   |         |
+| j              | [j]   |         |
+| k              | [k]   |         |
+| l, ll          | [l]   |         |
+| m, mm          | [m]   |         |
+| n, nn          | [n]   |         |
+| p, pp          | [p]   |         |
+| q, qu          | [qv]  |         |
+| r, rr          | [r]   |         |
+|                | [ɐ]   | U+0250  |
+| s              | [z]   |         |
+|                | [s]   |         |
+| ss, ß          | [s]   |         |
+| t, tt          | [t]   |         |
+| v              | [f]   |         |
+|                | [v]   |         |
+| w              | [v]   |         |
+| y              | [y:]  |         |
+|                | [y]   |         |
+|                | [j]   |         |
+| z              | [ts]  |         |
+| ch             | [ç]   | U+00E7  |
+|                | [x]   |         |
+|                | [k]   |         |
+|                | [ſ]   | U+017F  |
+| chs            | [ks]  |         |
+| ck             | [k]   |         |
+| dt, th         | [t]   |         |
+| ng             | [ŋ]   | U+014B  |
+| nk             | [ŋk]  | U+014B  |
+| pf             | [pf]  |         |
+| ph             | [f]   |         |
+| sch            | [ſ]   | U+017F  |
+| tsch           | [tſ]  | U+017F  |
+| ts, tz, ds     | [ts]  |         |
+
+# 字母
+
+| 字母  | Unicode |
+| :---: | :-----: |
+| ä     | U+00E4  |
+| ö     | U+00F6  |
+| ü     | U+00FC  |
+| ß     | U+00DF  |
