@@ -1,7 +1,7 @@
 ---
 layout: post
+author: JachinShen
 title:  "BERT论文翻译"
-subtitle: "Google还是牛啊"
 date:   2018-11-26  22:05:00 +0800
 categories: Paper
 tags: 
