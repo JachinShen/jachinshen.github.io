@@ -53,7 +53,7 @@ config setup
 conn sjtu
 	left=%config
 	leftsourceip=%config
-	leftauth=eap
+	leftauth=eap-gtc
 	right=stu.vpn.sjtu.edu.cn
 	rightsubnet=0.0.0.0/0
 	rightid=@stu.vpn.sjtu.edu.cn
@@ -63,7 +63,7 @@ conn sjtu
 
 ```
 
-其中`left`指的是客户端，用`%config`是希望使用分配到的内网ip，认证方式为`eap`；`right`指的是服务端，认证方式为公钥；eap的帐号就是jAccount的帐号。
+其中`left`指的是客户端，用`%config`是希望使用分配到的内网ip，认证方式为`eap-gtc`（更新：原本为`eap`，可能会使用默认的认证方式，导致认证失败，需要指定为GTC模式。另外，从源码编译时，需要添加GTC模块`--enable-eap-gtc`）；`right`指的是服务端，认证方式为公钥；eap的帐号就是jAccount的帐号。
 
 `/etc/ipsec.secrets`文件配置如下：
 
