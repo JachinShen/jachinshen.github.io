@@ -10,7 +10,7 @@ tags:
 ---
 # ICRA 2019 RoboMaster AI Challenge 策略方案
 
-ICRA RoboMaster AI Challenge 的核心在于策略的开发。从官方提供标准平台就可以看出，希望参赛队伍把重心放在策略。我们队使用的是传统状态机和强化学习组合的策略。状态机用于控制全局的策略，如何时开始比赛、何时补弹、何时使用强化学习等宏观行为。因为这些行为都有固定的模式，条件清晰，动作明确，用状态机可以快速地控制比赛的策略。强化学习主要用于局部的策略，本赛季我们只实现了追击的功能。因为追击的功能需要对敌方的行为快速作出反应，动作控制很复杂，所以用强化学习可以学到适合各种情况的策略，更加灵活。本文主要介绍用强化学习实现追击，具体代码在https://github.com/JachinShen/supreme-invention。
+ICRA RoboMaster AI Challenge 的核心在于策略的开发。从官方提供标准平台就可以看出，希望参赛队伍把重心放在策略。我们队使用的是传统状态机和强化学习组合的策略。状态机用于控制全局的策略，如何时开始比赛、何时补弹、何时使用强化学习等宏观行为。因为这些行为都有固定的模式，条件清晰，动作明确，用状态机可以快速地控制比赛的策略。强化学习主要用于局部的策略，本赛季我们只实现了追击的功能。因为追击的功能需要对敌方的行为快速作出反应，动作控制很复杂，所以用强化学习可以学到适合各种情况的策略，更加灵活。本文主要介绍用强化学习实现追击，[具体代码](https://github.com/JachinShen/supreme-invention)。
 
 ## 模拟环境
 
@@ -61,7 +61,9 @@ $$ p_r = Softmax([\sum enemy_{left}, \sum enemy_{front}, \sum enemy_{right}]) $$
 
 同理，对于移动的动作，还需要考虑距离信号，避免撞墙，也就是尽量往距离远的方向移动，先验如下：
 
-$$  p_m = Softmax([\sum distance_{left}, \sum distance_{front}, \sum distance_{right}]) +  Softmax([\sum enemy_{left}, \sum enemy_{front}, \sum enemy_{right}])  $$
+$$  p_m = Softmax([\sum distance_{left}, \sum distance_{front}, \sum distance_{right}]) $$
+
+$$ +  Softmax([\sum enemy_{left}, \sum enemy_{front}, \sum enemy_{right}])  $$
 
 其中 $distance_{direction} = [d_1, d_2, \cdots, d_n], d_i \in R^+, i \in direction $,  $enemy_{direction} = [t_1, t_2, \cdots, t_n], t_i \in \{0, 1\}, i \in direction $
 
@@ -93,7 +95,6 @@ $$  p_m = Softmax([\sum distance_{left}, \sum distance_{front}, \sum distance_{r
 官方框架 RoboRTS 是基于 ROS 开发的，因此我们也用 Python 编写了一个 ROS 的节点，然后利用 ROS 的通讯机制，把激光雷达和自动瞄准的信息传给模型，再把动作传回给全局决策模型。另外，全局策略需要决定何时调用这个模型。从这个模型良好的追击性能看，我们选择了只在识别到敌手的时候，调用这个模型。但是这个模型的避障能力不强，因此我们又根据原始的激光雷达信号，编写了保护程序：当机器人在运动方向上离障碍物很近的时候，阻止移动命令的下达。解决了这些问题后，我们的模型终于在实车上运行成功了：
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/pTiAzl6hWXM" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
 视频中，蓝车是人控制的，红车是自主运行的。首先全局策略会调用巡逻的程序，寻找敌手，此时枪口会不断左右摇摆来扩大搜索范围。识别到敌手以后，就会调用 ActorCritic 模型，此时枪口会瞄准敌方。ActorCritic 模型会引导模型追击敌手，视频中可以看到，红车识别到蓝车后，就一直往蓝车的方向靠近，但不是直线移动，而是看似无规律地运动，起到了躲避对方反击的功能。
 
 ## 总结
