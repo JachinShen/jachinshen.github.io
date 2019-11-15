@@ -4,15 +4,14 @@ title: About
 permalink: /about/
 ---
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+## Awards
 
-You can find the source code for Minima at GitHub:
-[jekyll][jekyll-organization] /
-[minima](https://github.com/jekyll/minima)
+- Grand Prize, Team Jiao Long, (RoboMaster 2019 Final Tournament)[https://www.robomaster.com/en-US/resource/pages/1035?type=announcementSub], Sep. 2018 - Aug. 2019
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
+- Third Prize, Team Jiao Long, (ICRA 2019 RoboMaster AI Challenge)[https://www.robomaster.com/en-US/resource/pages/1027?type=announcementSub], Dec. 2018 - May 2019
+
+- Meritorious Winner, (Interdisciplinary Contest In Modeling (ICM) 2019)[https://www.comap.com/undergraduate/contests/], Jan. 2019
+
+- Second Prize, Team Jiao Long, (RoboMaster 2018 Final Tournament)[https://www.robomaster.com/en-US/resource/pages/872?type=announcementSub], Sep. 2017 - Jul. 2018
 
 
-[jekyll-organization]: https://github.com/jekyll
