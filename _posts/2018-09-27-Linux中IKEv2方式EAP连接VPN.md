@@ -119,6 +119,8 @@ connection 'sjtu' established successfully
 
 ```
 
+成功之后可以在浏览器中打开net.sjtu.edu.cn，观察页面底部的ip地址，来验证VPN是否真的启用了。
+
 ## 调试
 
 如果第一次没有成功，可以通过以下流程调试：
