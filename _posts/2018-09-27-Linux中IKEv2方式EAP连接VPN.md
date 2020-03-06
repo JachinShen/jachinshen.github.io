@@ -87,8 +87,8 @@ sudo cp -r /etc/ssl/certs/* /etc/ipsec.d/cacerts
 
 配置好之后，就可以连接了：
 
-- `ipsec start`
-- `ipsec up sjtu`
+- `sudo ipsec start`
+- `sudo ipsec up sjtu`
 
 连接成功的信息如下：
 
@@ -125,8 +125,8 @@ connection 'sjtu' established successfully
 
 - 看日志，找出错误位置
 - 更改配置文件
-- `ipsec restart`重启
-- `ipsec up <name>`再次尝试
+- `sudo ipsec restart`重启
+- `sudo ipsec up sjtu`再次尝试
 
 ## PS
 

@@ -4,9 +4,7 @@ title: About
 permalink: /about/
 ---
 
-# About
-
-I am a student majoring in Computer Science and Technology at SJTU. 
+I am a student majoring in Computer Science and Technology at SJTU.  I have attended RoboMaster 2017, 2018, 2019 and ICRA 2019 RoboMaster AI Challenge.
 
 ## RoboMaster
 
