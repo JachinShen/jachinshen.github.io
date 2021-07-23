@@ -4,7 +4,7 @@ title: About
 permalink: /about/
 ---
 
-I am a student majoring in Computer Science and Technology at SJTU.  I have attended RoboMaster 2017, 2018, 2019 and ICRA 2019 RoboMaster AI Challenge.
+I am a Master student majoring in Computer Science at ETH and a Bachelor in Computer Science and Technology at SJTU.  I have attended RoboMaster 2017, 2018, 2019 and ICRA 2019 RoboMaster AI Challenge.
 
 ## RoboMaster
 
