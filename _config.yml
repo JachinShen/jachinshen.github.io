@@ -53,7 +53,7 @@ date_format: "%Y-%m-%d"
 # Math equations
 mathjax: true
 # Google Analysis
-google_analytics: UA-113320875-1
+google_analytics: G-1X5Y0V3D9K
 # Pagination
 paginate: 10  # amount of posts to show per page
 paginate_path: /page:num/
