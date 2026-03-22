@@ -1,7 +1,7 @@
 ---
 layout: post
 author: JachinShen
-title:  "Nix Might Be a More AI-Native Ops Language: Re-dividing Responsibilities Between Docker and Nix+bwrap"
+title:  "Nix 可能是更 AI-native 的运维语言：从 Docker 到 Nix+bwrap 的再分工"
 date:   2026-03-22 10:30:00 +0800
 categories: Architecture
 tags:
@@ -12,193 +12,187 @@ tags:
     - MultiTenant
 ---
 
-# Background
+# 背景
 
-After OpenClaw took off, one trend became obvious: many teams started shipping "OpenClaw wrappers," and most cloud deployments defaulted to Docker-per-tenant. That choice is reasonable early on, and the engineering cognitive load is low.
+OpenClaw（小龙虾）这波热度起来后，我看到一个明显趋势：很多团队都在做“套壳龙虾”，而云端落地方案基本默认是 Docker 容器。这个选择在早期完全合理，工程心智成本也最低。  
+但当我自己尝试部署云端 Claude Code 时，问题很快出现了: 如果 3 到 6 个月后 Agent 数量继续爆发，容器方案在资源利用率和存储复用上的浪费会被放大。换句话说，我们需要的不是“把 Agent 装进容器”，而是一个更偏 **Agent as a Service** 的运行架构。
 
-But when I tried deploying Claude Code in the cloud myself, the pain surfaced quickly. If agent count keeps growing over the next 3-6 months, waste in container-based isolation becomes amplified, especially in utilization and storage duplication. In other words, what we need is not just "put agents into containers," but a more explicit **Agent-as-a-Service** runtime model.
+在 AI Agent 类系统里，常见需求是同时服务大量租户，每个租户都需要“可执行、可隔离、可复现”的运行环境。  
+传统做法是“每个租户一个 Docker 容器”，这个模型直观，但在高并发场景会遇到两个老问题：
 
-In agent systems, the common requirement is serving many tenants in parallel with environments that are executable, isolated, and reproducible.
+1. **算力闲置**：容器请求的 CPU/内存和真实负载常年不匹配，形成大面积低利用率。
+2. **存储重复**：同类租户反复携带相似运行时和依赖，镜像层复用无法完全消掉“每租户可写层 + 项目依赖”带来的重复占用。
 
-The traditional model is "one Docker container per tenant." It is intuitive, but under high concurrency it runs into two old problems:
+在增长侧，Agent 需求已经开始从试验走向规模化。Gartner 在 2025-06-25 的预测里给出两个信号：到 2028 年，日常决策中会有一部分由 Agent 自主完成，企业软件中带 Agent 能力的占比也会提升。  
+如果再考虑 OpenClaw 这类开源 Agent 基座在 2026 年的快速增长（截至 2026-03-22，GitHub 显示约 329k stars），云端活跃 Agent 实例规模继续上行是可以预期的，容量规划要提前做。
 
-1. **Idle compute**: requested CPU/memory often diverges from actual load, which creates persistent under-utilization.
-2. **Duplicate storage**: similar runtime dependencies are repeated across tenants; image-layer reuse cannot fully eliminate per-tenant writable-layer and dependency duplication.
+这里整理一种替代方向：**Docker 负责交付基础运行面，`bwrap` 负责进程级隔离，`Nix` 负责确定性依赖**。核心目标不是替代 Docker，而是把“租户级实例”从容器粒度下沉到进程粒度。
 
-On the growth side, agents are already moving from experimentation to scaled production. Gartner (2025-06-25) signals that by 2028, some daily decisions will be made autonomously by agentic AI, and the share of enterprise software with agentic capabilities will increase.
+# 一句话架构
 
-If you add the rapid rise of open-source agent foundations like OpenClaw (about 329k GitHub stars as of 2026-03-22), continued growth in active cloud agent instances is a realistic planning assumption.
+**单宿主长驻网关 + 每请求/每会话启动 bwrap 沙箱 + 共享只读 Nix Store + 任务时按需激活开发环境。**
 
-This post summarizes an alternative direction: **Docker handles base runtime delivery, `bwrap` handles process-level isolation, and `Nix` handles deterministic dependencies**. The goal is not replacing Docker, but shifting tenant instances from container granularity to process granularity.
+还有一个对扩容很关键的约束：执行环境尽量无状态，状态都落在租户各自的 workspace 文件里。这样后续做水平扩展时，迁移的是“请求和工作区映射”，不是整套运行时内存态，系统会更稳定。
 
-# Architecture in One Sentence
+这个组合把“环境构建成本”与“租户隔离成本”拆开处理：
 
-**A long-running host gateway + bwrap sandbox per request/session + shared read-only Nix Store + task-time on-demand environment activation.**
+1. 构建期：把依赖固化进不可变依赖层（Nix Store）。
+2. 运行期：租户只创建轻量隔离壳（bwrap + namespace）。
+3. 任务期：在隔离壳内按声明激活工具链（而非提前烘焙整镜像）。
 
-One scaling constraint is especially important: keep execution stateless, and persist state as files in each tenant workspace. This makes horizontal scaling mostly about request routing and workspace mapping, not moving in-memory runtime state.
+# 设计抽象：四层模型
 
-This split separates "environment build cost" from "tenant isolation cost":
+1. **分发层（Gateway）**  
+负责鉴权、路由、会话映射、生命周期管理。
+2. **隔离层（Sandbox）**  
+用 Linux namespace + 挂载策略构建“最小可运行文件系统视图”。
+3. **依赖层（Nix Store）**  
+把语言运行时、构建工具、媒体工具等做成可复用、不可变的依赖对象。
+4. **任务层（Task Runtime）**  
+每次任务在隔离壳内临时激活声明式环境，任务结束即释放执行上下文。
 
-1. Build time: materialize dependencies into an immutable dependency layer (Nix Store).
-2. Runtime: create a lightweight isolation shell per tenant (bwrap + namespaces).
-3. Task time: activate declared toolchains on demand instead of pre-baking every variant into images.
+# 核心算法：一次任务如何被执行
 
-# Design Abstraction: Four Layers
+可以抽象成以下流程：
 
-1. **Distribution layer (Gateway)**  
-Authentication, routing, session mapping, lifecycle management.
-2. **Isolation layer (Sandbox)**  
-Namespace + mount policy to construct a minimal runnable filesystem view.
-3. **Dependency layer (Nix Store)**  
-Immutable, reusable artifacts for runtimes, build tools, and media tools.
-4. **Task layer (Task Runtime)**  
-Each task executes in an ephemeral context activated from declarations.
+1. **租户上下文解析**：根据用户标识定位其工作区和会话状态。
+2. **工作区就绪检查**：若首次访问，复制模板并打初始化标记；否则直接复用。
+3. **沙箱构建**：  
+   - 根文件系统使用临时内存层；  
+   - 仅挂载必要只读系统路径；  
+   - 挂载租户私有可写目录；  
+   - 挂载共享只读依赖层；  
+   - 注入最小环境变量集。  
+4. **网络策略选择**：  
+   - 需要外网时使用受控出口；  
+   - 不需要时直接断网。  
+5. **任务执行包装**：用声明式环境激活器包装真实命令，确保版本与依赖一致。
+6. **结果回传与回收**：流式返回输出，进程随父生命周期回收，临时层自动销毁。
 
-# Core Algorithm: How One Task Runs
+这个流程的关键点是：**隔离是运行时动作，依赖一致性是构建时资产**。
 
-A single task can be abstracted as:
+# 与“每租户一个 Docker”相比，真正变化了什么
 
-1. **Resolve tenant context**: locate tenant workspace and session state.
-2. **Ensure workspace readiness**: initialize from template on first access; otherwise reuse.
-3. **Build sandbox**:
-   - tmpfs root;
-   - mount only required read-only system paths;
-   - mount tenant private writable paths;
-   - mount shared read-only dependency layer;
-   - inject minimal environment variables.
-4. **Select network policy**:
-   - controlled egress when external access is needed;
-   - no network otherwise.
-5. **Wrap command execution** with declared environment activation to keep versions/dependencies consistent.
-6. **Stream output and cleanup**: tie child lifecycle to parent and destroy transient layers.
-
-Key idea: **isolation is a runtime action; reproducibility is a build-time asset**.
-
-# What Actually Changes vs "One Docker per Tenant"
-
-| Dimension | Traditional Docker Multi-Tenant | Nix + bwrap |
+| 维度 | 传统 Docker 多租户 | Nix + bwrap 方案 |
 | --- | --- | --- |
-| Tenant unit | Container | Sandboxed process |
-| Startup cost | Start container context | Spawn constrained process |
-| Dependency reuse | Coarse image layer reuse | Fine-grained store object reuse |
-| Environment consistency | Depends on image/version discipline | Enforced by declarations |
-| Isolation mechanism | Container boundaries | Namespace + mount whitelist |
-| Density | Medium | High (good for short tasks) |
-| Debugging model | Enter container and inspect | Reproduce from same declaration |
+| 租户实例粒度 | 容器 | 进程沙箱 |
+| 启动成本 | 需要拉起容器上下文 | 直接拉起受限进程 |
+| 依赖复用 | 镜像层复用，粒度较粗 | Store 对象复用，粒度更细 |
+| 环境一致性 | 依赖镜像版本管理纪律 | 依赖由声明式约束直接收敛 |
+| 隔离手段 | 容器隔离 | namespace + 挂载白名单 |
+| 资源密度 | 中等 | 高（适合大量短任务） |
+| 调试方式 | 进入容器排查 | 复现同一声明环境排查 |
 
-From a systems perspective, this is not just "which one is safer." It moves the bottleneck from container orchestration overhead toward kernel-level process scheduling and I/O behavior.
+从系统视角看，这不是“谁更安全”这么简单，而是**把容量瓶颈从容器编排开销迁移到内核进程调度与 I/O 管理**。
 
-# Why This Fits Agent Workloads Better
+# 为什么这套架构在 Agent 场景更合适
 
-1. **Short tasks, frequent starts**  
-Agent operations are often second- or minute-scale; process sandboxing matches this pattern better.
-2. **Fast-changing dependency combinations**  
-Different tasks need different toolchains; declaration-based activation is easier to control than image matrix expansion.
-3. **Reproducible debugging**  
-The same declaration reproduces the same environment state.
-4. **High tenant density**  
-Shared read-only dependency layers reduce repeated downloads and storage pressure.
+1. **任务时长短、启动频繁**  
+Agent 工具调用通常是秒级或分钟级，进程沙箱比容器重建更匹配。
+2. **依赖组合变化快**  
+不同任务需要不同语言和工具链，声明式按需激活比维护大量镜像组合更可控。
+3. **需要可复现排障**  
+同一依赖声明可直接复现现场，减少“线上与本地不一致”。
+4. **需要高租户密度**  
+共享只读依赖层显著降低重复磁盘占用与冷启动下载。
 
-# A Key Point: Why Declarative Environments Fit Agents
+# 一个关键点：为什么声明式环境更适合 Agent 系统
 
-Nix is often treated as "a harder package manager," but in agent systems it behaves more like **environment state specification**.
+很多人把 Nix 当“更难的包管理器”，但在 Agent 系统里它更像**环境状态描述**。
 
-For agents, `flake.nix` gives two direct benefits:
+对 Agent 来说，`flake.nix` 有两个直接收益：
 
-1. **Readability**  
-The agent can inspect one declaration file and quickly infer available toolchains, version constraints, and hooks.
-2. **Executability**  
-Tasks can run in a declared environment directly, instead of replaying procedural install chains (`apt-get`, shell scripts, etc.) at runtime.
+1. **可读性收益**  
+Agent 不需要倒推长脚本，只要读取一个声明文件，就能快速知道“可用工具链 + 版本约束 + 运行钩子”。
+2. **可执行性收益**  
+任务执行时可以按声明激活环境，而不是在运行期重新走一遍 `apt-get`/`curl bash` 这类过程式安装流程。
 
-Procedural scripts encode step history. Declarative files encode target state. For systems that continuously decide and self-correct, target-state descriptions are easier to analyze, validate, and reproduce.
+这对自动化系统很关键。过程式脚本的本质是“步骤历史”，声明式文件的本质是“目标状态”。  
+对于需要频繁决策和自我修正的 Agent，后者通常更容易做静态理解、冲突检测和快速复现。
 
-# Security Boundaries
+# 安全边界如何定义
 
-Security here is not a single mechanism. It is boundary composition:
+这类方案的安全性不依赖单一组件，而是依赖“边界叠加”：
 
-1. **Mount boundary**: deny by default, expose by whitelist.
-2. **Write boundary**: read-only dependency layer, tenant-only writable workspace.
-3. **Process boundary**: visibility limited to sandbox-local process tree.
-4. **Network boundary**: shared/proxied/isolated per task policy.
-5. **Resource boundary**: CPU/memory/concurrency quotas at orchestrator level.
+1. **挂载边界**：默认不可见，按白名单暴露路径。
+2. **写权限边界**：依赖层只读，租户只写自己的工作区。
+3. **进程边界**：只能看到沙箱内进程树。
+4. **网络边界**：按任务策略选择共享、代理或隔离网络。
+5. **资源边界**：通过上层调度系统加 CPU/内存/并发配额。
 
-Operationally, `bwrap` provides process-level isolation, not complete host-level governance. Resource controls and auditability still belong to the orchestration layer.
+工程上要注意：`bwrap` 只解决进程级隔离，不替代宿主级资源治理；资源限制和审计仍要由编排层承担。
 
-# Cost Model: Where This Architecture Spends Money
+# 成本模型：这套设计把钱花在哪
 
-Traditional mode often spends on:
+传统模式常把成本花在：
 
-1. Container create/destroy overhead.
-2. Image pull and cache invalidation.
-3. Repeated packaging of multi-language dependencies.
+1. 容器创建与销毁；
+2. 镜像拉取与层缓存失效；
+3. 多语言依赖重复打包。
 
-Nix + bwrap spends more on:
+Nix + bwrap 模式把成本转移到：
 
-1. Pre-build and cache management.
-2. Dependency declaration quality.
-3. Sandbox policy maintenance (mount/network/permission matrix).
+1. 前置构建和缓存治理；
+2. 依赖声明质量；
+3. 沙箱策略维护（挂载、网络、权限矩阵）。
 
-So this pattern fits teams willing to trade upfront engineering rigor for long-term density and predictability.
+因此它适合“前期工程化投入换长期密度收益”的团队，不适合一次性脚本型系统。
 
-A concrete example: two tenants both need Chrome.
+举个很具体的例子：两个用户都要用 Chrome。  
+在“每租户一个 Docker”模式里，通常会出现两份安装和两份可写层开销；在 Nix 模式里，只要在 `flake.nix` 声明该依赖，底层通过 Store 和 binary cache 复用同一份构件。结果是同一依赖只构建/下载一次，磁盘占用和冷启动压力都更可控。
 
-In Docker-per-tenant mode, you often end up with duplicated installation and writable-layer cost. In Nix mode, declare Chrome once in `flake.nix`; Store objects and binary cache are reused. Net effect: one build/download path, lower disk duplication, and lower cold-start pressure.
+# 一次真实试错：冷启动慢且时间方差巨大，bwrap 不是瓶颈
 
-# A Real Debugging Story: Slow and Unstable Cold Starts (bwrap Was Not the Bottleneck)
+落地早期碰到一个很误导的问题：包装后的 `gemini-cli` 冷启动经常非常慢，而且每次慢的程度不稳定。
 
-Early in rollout we saw a confusing behavior: wrapped `gemini-cli` cold starts were sometimes very slow, and latency variance was huge.
+第一轮怀疑对象都很“合理”：
 
-Initial suspects were all reasonable:
+1. 云盘 I/O 抖动；
+2. bwrap 隔离开销；
+3. Nix 环境激活构建延迟。
 
-1. Cloud disk I/O jitter.
-2. bwrap overhead.
-3. Nix environment activation/build latency.
+但逐项排除后发现都不是主因。真正的根因是：`gemini-cli` 在启动阶段会检查 ripgrep 二进制，找不到时会触发外网下载；而检查路径不是系统 `PATH`，而是固定的全局目录。  
+这就导致两件事同时发生：
 
-After elimination, none of these were primary.
+1. 冷启动时延受外网状态影响；
+2. 时延方差变大，压测曲线很难稳定。
 
-The root cause was that `gemini-cli` checks for a ripgrep binary at startup. If missing, it triggers a network download. The check path is a fixed global path, not just normal `PATH` resolution.
+最终解法是让系统预先满足这个固定路径期望（例如在沙箱里把已有 ripgrep 映射到该路径），把下载行为从运行期移到构建期。  
+这个案例的教训是：**当延迟既慢又抖时，先确认是否存在隐式下载链路，再谈隔离和调度优化。**
 
-That caused two effects:
+# 不适用边界
 
-1. Cold-start latency became network-dependent.
-2. Latency variance became large and hard to benchmark.
+以下场景不建议优先采用：
 
-The fix was to satisfy that expected path upfront (for example, mapping an existing ripgrep binary there inside the sandbox), effectively moving acquisition from runtime to build/prep time.
+1. 团队没有 Linux 隔离与 Nix 维护经验；
+2. 任务本身是长生命周期服务，更适合直接容器编排；
+3. 强依赖 GPU 设备透传且隔离策略尚未标准化；
+4. 合规要求必须使用成熟容器安全栈的现成认证路径。
 
-Main lesson: **when latency is both slow and unstable, verify hidden download paths before tuning isolation or scheduling.**
+# 迁移策略（从 Docker 走向 Nix + bwrap）
 
-# When This Is Not a Good Fit
+建议分三步，不要一次重构：
 
-1. Teams without Linux isolation + Nix operational experience.
-2. Long-lived service workloads better served by standard container orchestration.
-3. Heavy GPU passthrough scenarios without mature isolation policy.
-4. Compliance contexts requiring pre-certified container security stacks.
+1. **先声明依赖**：把当前镜像里的关键运行时迁到声明式依赖层。
+2. **再下沉实例粒度**：把“每租户容器”改为“每租户沙箱进程”。
+3. **最后补齐治理**：完善资源配额、审计日志、失败回收和压测基线。
 
-# Migration Strategy: From Docker to Nix + bwrap
+这样可以保留 Docker 的交付稳定性，同时逐步获得高密度运行能力。
 
-Use staged migration instead of big-bang rewrite:
+# 总结
 
-1. **Declare dependencies first**: move critical runtimes from image scripts into declarative dependency layer.
-2. **Then shift tenant unit**: from per-tenant container to per-tenant sandboxed process.
-3. **Then complete governance**: quotas, audit logs, failure cleanup, and load-test baselines.
+这条路线的本质是：  
+**Docker 继续做系统交付，Nix 负责依赖确定性，bwrap 负责租户执行隔离。**
 
-This keeps Docker's delivery stability while gradually unlocking higher runtime density.
+当系统目标是“高并发短任务 + 多语言工具链 + 强复现能力”时，这种分层组合通常比“每租户一个 Docker 容器”更经济；但前提是你愿意为声明式依赖和隔离策略投入长期工程纪律。
 
-# Conclusion
+# 参考资料
 
-The core split is:
-
-**Docker for system delivery, Nix for deterministic dependencies, bwrap for tenant execution isolation.**
-
-When the goal is high-concurrency short tasks + multi-language toolchains + reproducible execution, this layered model is often more economical than one-container-per-tenant, as long as the team can maintain declarative dependency and sandbox policy discipline.
-
-# References
-
-1. Gartner (2025-06-25), Agentic AI forecast:  
+1. Gartner（2025-06-25）Agentic AI 预测：  
 https://www.gartner.com/en/newsroom/press-releases/2025-06-25-gartner-predicts-over-40-percent-of-agentic-ai-projects-will-be-canceled-by-end-of-2027
-2. CAST AI (2025), Kubernetes utilization and waste (vendor sample, trend reference):  
+2. CAST AI（2025）Kubernetes 利用率与浪费数据（厂商样本，作趋势参考）：  
 https://cast.ai/press-release/new-kubernetes-cost-benchmark-report-reveals-persistent-cloud-waste/
-3. CNCF (2026-01-20), Annual Cloud Native Survey:  
+3. CNCF（2026-01-20）Cloud Native Survey（K8s in production 82%）：  
 https://www.cncf.io/reports/the-cncf-annual-cloud-native-survey/
-4. OpenClaw GitHub repository (popularity observation, time-varying):  
+4. OpenClaw GitHub 仓库（热度观测，数据随时间变化）：  
 https://github.com/openclaw/openclaw
