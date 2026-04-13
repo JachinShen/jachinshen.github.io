@@ -2,7 +2,7 @@
 layout: post
 author: JachinShen
 title:  "IGLM（三）：DILR、随机组合与 Scaling Law 的概率解释"
-date:   2026-04-13 14:30:00 +0800
+date:   2026-04-13 10:30:00 +0800
 categories: Study
 tags: 
     - Study
@@ -12,6 +12,8 @@ tags:
 ---
 
 # IGLM（三）：DILR、随机组合与 Scaling Law 的概率解释
+
+> 说明：本文中的具体实现、数学整理与写作表述均由 GPT 辅助完成，笔者本人主要负责提出核心想法、研究方向与关键判断。
 
 前两篇主要做了两件事：
 
